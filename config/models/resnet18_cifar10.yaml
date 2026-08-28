@@ -1,0 +1,19 @@
+model: resnet18_cifar
+dataset: cifar10
+num_classes: 10
+ 
+epochs: 100
+batch_size: 128
+lr: 0.1
+momentum: 0.9
+weight_decay: 0.0005
+seed: 42
+ 
+checkpoint_dir: ./checkpoints
+checkpoint_name: resnet18_cifar10_baseline.pt
+ 
+mlflow:
+  enabled: false
+  experiment_name: dnn-watermark-robustness
+  run_name: resnet18_cifar10_baseline
+ 
