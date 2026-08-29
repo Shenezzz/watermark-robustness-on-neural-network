@@ -1,0 +1,21 @@
+baseline_checkpoint: ./checkpoints/resnet18_cifar10_baseline.pt
+watermark_layer: layer3.0.conv1   # which Conv2d layer to watermark -- see note in embed_watermark.py
+
+message_len: 32
+seed: 123
+lambda_wm: 0.1        # weight of the watermark loss relative to classification loss
+
+epochs: 10             # short fine-tune, not a full retrain -- baseline is already trained
+batch_size: 128
+lr: 0.01               # lower than baseline's initial lr -- this is fine-tuning, not training from scratch
+momentum: 0.9
+weight_decay: 0.0005
+seed_train: 42
+
+checkpoint_dir: ./checkpoints
+checkpoint_name: resnet18_cifar10_uchida.pt
+
+mlflow:
+  enabled: true
+  experiment_name: dnn-watermark-robustness
+  run_name: resnet18_cifar10_uchida_embed

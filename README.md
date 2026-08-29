@@ -1,1 +1,1 @@
-Best test accuracy: 0.9479 
+Best test accuracy on normal trained model: 0.9479 
