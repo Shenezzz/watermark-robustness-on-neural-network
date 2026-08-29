@@ -1,152 +1,86 @@
 """
-Embedding Uchida-style watermark on an already trained baseline models
+Uchida et al., "Embedding Watermarks into Deep Neural Networks" (2017).
 
-Consider this as a short fine tuning task where we load the baseline checkpoint 
-weights. Then continue training with the watermark
-regularization loss added on top of ordinary cross-entropy, for a small
-number of epochs. This is the standard way Uchida-style watermarks are
-embedded in practice.
+Mechanism: pick one conv layer. Average its weights across the output-channel
+dimension to get a single representative vector w_bar. Project that vector
+through a FIXED secret random matrix X (the key -- generated once, never
+trained, saved alongside the watermarked checkpoint). The projection, after
+a sigmoid, should equal a secret target bit-string b (the payload).
 
-L(total) = L(training) + A*L(watermark)
+During fine-tuning, add BCE(sigmoid(X @ w_bar), b) to the ordinary
+classification loss. This nudges the layer toward a point in weight-space
+that both classifies well AND encodes the bits -- it does not change what
+the network computes on real inputs, since there are many equally-good
+weight configurations and this loss just steers training toward one that
+also satisfies the watermark constraint.
 
-
-Run command : python scripts/embed_watermark.py --config configs/watermarks/uchida.yaml
+Verification later (including post-attack) only needs: the watermarked
+model's current weights, the same layer name, and the same (X, b) key --
+all three get saved together in the watermarked checkpoint.
 """
 
-import argparse
-import os
-import sys  # used for file path and directories
-import time
- 
 import torch
-import yaml
+import torch.nn as nn
+import torch.nn.functional as F
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # find the project root and adds into the projects import path
 
-from src.models.resnet_cifar import resnet18_cifar
-from src.data.loaders import get_cifar_loaders
-from src.training.loop import train_one_epoch, evaluate
-from src.watermarks.uchida import UchidaWatermark
+class UchidaWatermark:
+    def __init__(self, layer: nn.Conv2d, message_len: int = 32, seed: int = 0):
+        self.layer = layer
+        self.message_len = message_len
 
-# Define a helper function to find a file
-def resolve_path(path, project_root):
-    if os.path.exists(path):
-        return path
-    candidate = os.path.join(project_root, path)
-    if os.path.exists(candidate):
-        return candidate
-    raise FileNotFoundError(
-        f"Could not find '{path}'.\n  Tried: {os.path.abspath(path)}\n  Tried: {candidate}\n"
-        f"  cwd: {os.getcwd()}"
-    )
+        vector_len = layer.in_channels * layer.kernel_size[0] * layer.kernel_size[1]
+        device, dtype = layer.weight.device, layer.weight.dtype
 
-# Defining a helper function to select a conv1 layer for embedding watermark where layer_name comes from the YAML config
-def get_layer_by_name(model, layer_name):
-    """e.g. 'layer3.0.conv1' -> model.layer3[0].conv1"""
-    module = model
-    for part in layer_name.split("."):
-        module = module[int(part)] if part.isdigit() else getattr(module, part)
-    return module
+        # Secret key: fixed random projection matrix, generated once and
+        # never updated by the optimizer (it's not an nn.Parameter).
+        gen = torch.Generator().manual_seed(seed)
+        self.X = torch.randn(message_len, vector_len, generator=gen).to(device, dtype)
 
-# Watermarking process
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True)
-    args = parser.parse_args() # now args.config will contain "--config configs/watermarks/uchida.yaml"
-    
-    # Finds the YAML file and converts the YAML key-value to dictionary
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = resolve_path(args.config, project_root)
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
-        
-    torch.manual_seed(cfg["seed_train"]) # for reproducibility during fine tuning
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-     # Load the trained baseline
-    baseline_path = resolve_path(cfg["baseline_checkpoint"], project_root)
-    baseline = torch.load(baseline_path, map_location=device)
-    baseline_acc = baseline["test_acc"]
-    print(f"Loaded baseline checkpoint -- baseline test_acc = {baseline_acc:.4f}")
-    
-    model = resnet18_cifar(num_classes=10).to(device) # Creating a new ResNet-18 Note: At this moment the weights are randomly initialzed
-    model.load_state_dict(baseline["model_state_dict"]) # replace random weights with baseline weights.
-    # Note: Now "model" is a clean trained ResNet
-    
-    # Setting watermark on chosen layer
-    target_layer = get_layer_by_name(model, cfg["watermark_layer"])
-    # To check if the selected layer is actually a Conv, we not we stop
-    assert isinstance(target_layer, torch.nn.Conv2d), \
-        f"'{cfg['watermark_layer']}' is not a Conv2d layer -- check the name against `print(model)`"
-    wm = UchidaWatermark(target_layer, message_len=cfg["message_len"], seed=cfg["seed"])
-    print(f"Watermark initialized on layer '{cfg['watermark_layer']}' "
-          f"-- initial bit accuracy (should be ~0.5, i.e. unembedded): {wm.bit_accuracy():.3f}")
+        # Secret payload: the bit-string you're actually embedding.
+        payload_gen = torch.Generator().manual_seed(seed + 1)  # different seed from X
+        self.target_bits = (torch.rand(message_len, generator=payload_gen) > 0.5).float().to(device, dtype)
 
-    # Fine-tune with the watermark loss added in 
-    train_loader, test_loader = get_cifar_loaders(batch_size=cfg["batch_size"])
-    optimizer = torch.optim.SGD(model.parameters(), lr=cfg["lr"], momentum=cfg["momentum"],
-                                 weight_decay=cfg["weight_decay"], nesterov=True)
- 
-    lambda_wm = cfg["lambda_wm"]
-    extra_loss_fn = lambda m: lambda_wm * wm.regularization_loss(m)
-    
-    mlflow_cfg = cfg.get("mlflow", {})
-    if mlflow_cfg.get("enabled"):
-        import mlflow
-        mlflow.set_tracking_uri("file:./mlruns")
-        mlflow.set_experiment(mlflow_cfg["experiment_name"])
-        mlflow.start_run(run_name=mlflow_cfg["run_name"])
-        mlflow.log_params({
-            "model": "resnet18_cifar", "watermark_scheme": "uchida", "attack": "none",
-            "watermark_layer": cfg["watermark_layer"], "message_len": cfg["message_len"],
-            "lambda_wm": lambda_wm, "epochs": cfg["epochs"],
-        })
-        
-    for epoch in range(1, cfg["epochs"] + 1):
-        t0 = time.time()
-        train_loss, train_acc = train_one_epoch(model, train_loader, optimizer, device,
-                                                    extra_loss_fn=extra_loss_fn)
-        test_loss, test_acc = evaluate(model, test_loader, device)
-        bit_acc = wm.bit_accuracy()
-        elapsed = time.time() - t0
-        
-        print(f"epoch {epoch:2d}/{cfg['epochs']} | "
-            f"train_acc {train_acc:.4f} | test_acc {test_acc:.4f} | "
-            f"watermark_bit_acc {bit_acc:.3f} | {elapsed:.1f}s")
-        
-        if mlflow_cfg.get("enabled"):
-            import mlflow
-            mlflow.log_metrics({"test_acc": test_acc, "watermark_bit_acc": bit_acc}, step=epoch)
-            
-        if bit_acc == 1.0 and epoch >= 3:
-            # Once the watermark is fully embedded and a few epochs have
-            # passed to let accuracy stabilize around it, no need to keep
-            # fine-tuning further -- extra epochs mostly risk accuracy drift.
-            print("Watermark fully embedded (bit_acc = 1.0) -- stopping early.")
-            break
-            
-    # Save watermarked checkpoint, including the key needed to re-verify later 
-    os.makedirs(cfg["checkpoint_dir"], exist_ok=True)
-    checkpoint_path = os.path.join(cfg["checkpoint_dir"], cfg["checkpoint_name"])
-    torch.save({
-        "model_state_dict": model.state_dict(), 
-        "test_acc": test_acc,
-        "baseline_test_acc": baseline_acc,
-        "watermark_scheme": "uchida",
-        "watermark_layer": cfg["watermark_layer"],
-        "watermark_state": wm.state_dict(), # Saves both X(key) and b(message) allong with the message length. You cannot verify wihtout these values
-    }, checkpoint_path)
-    
-    print(f"\nSaved watermarked checkpoint to {checkpoint_path}")
-    print(f"  test_acc: {test_acc:.4f}  (baseline was {baseline_acc:.4f} -- "
-          f"accuracy_retention so far = {test_acc / baseline_acc:.4f})")
-    print(f"  watermark_bit_acc: {wm.bit_accuracy():.3f}")
-    
-    if mlflow_cfg.get("enabled"):
-        import mlflow
-        mlflow.log_metric("final_accuracy_retention", test_acc / baseline_acc)
-        mlflow.log_artifact(checkpoint_path)
-        mlflow.end_run()
-    
-    if __name__ == "__main__":
-        main()   
+    def _weight_vector(self):
+        # Mean across the output-channel dim -> (in_channels, kh, kw) -> flatten
+        return self.layer.weight.mean(dim=0).flatten()
+
+    def regularization_loss(self, model=None):
+        # Signature matches the extra_loss_fn(model) hook in src/training/loop.py.
+        # `model` is unused here since self.layer is already a direct reference,
+        # but kept in the signature so this plugs into train_one_epoch as-is.
+        w_bar = self._weight_vector()
+        logits = self.X @ w_bar  # (message_len,)
+        return F.binary_cross_entropy_with_logits(logits, self.target_bits)
+
+    @torch.no_grad()
+    def extract_message(self):
+        w_bar = self._weight_vector()
+        logits = self.X @ w_bar
+        return (torch.sigmoid(logits) > 0.5).float()
+
+    @torch.no_grad()
+    def bit_accuracy(self):
+        """Watermark retention metric: fraction of bits that still match the
+        secret payload. 1.0 = fully intact. ~0.5 = watermark destroyed
+        (indistinguishable from random guessing on a binary string)."""
+        extracted = self.extract_message()
+        return (extracted == self.target_bits).float().mean().item()
+
+    def state_dict(self):
+        """Everything needed to re-verify this watermark later, including
+        after an attack has modified self.layer's weights."""
+        return {
+            "message_len": self.message_len,
+            "X": self.X.cpu(),
+            "target_bits": self.target_bits.cpu(),
+        }
+
+    @classmethod
+    def from_state_dict(cls, layer: nn.Conv2d, state):
+        wm = cls.__new__(cls)
+        wm.layer = layer
+        wm.message_len = state["message_len"]
+        wm.X = state["X"].to(layer.weight.device, layer.weight.dtype)
+        wm.target_bits = state["target_bits"].to(layer.weight.device, layer.weight.dtype)
+        return wm
