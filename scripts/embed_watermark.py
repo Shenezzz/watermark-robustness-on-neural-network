@@ -148,5 +148,5 @@ def main():
         mlflow.log_artifact(checkpoint_path)
         mlflow.end_run()
     
-    if __name__ == "__main__":
-        main()   
+if __name__ == "__main__":
+    main()   
