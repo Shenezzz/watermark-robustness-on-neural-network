@@ -56,6 +56,13 @@ class UchidaWatermark:
     @torch.no_grad()
     def extract_message(self):
         w_bar = self._weight_vector()
+        if w_bar.numel() != self.X.shape[1]:
+            # The attack changed this layer's weight shape (e.g. DeepEclipse's
+            # kernel padding). Extraction is not just noisy here, it's
+            # structurally impossible with the original key -- report as
+            # fully broken (chance-level) rather than crashing the whole
+            # attack sweep on a shape-mismatch error.
+            return torch.full_like(self.target_bits, 0.5)
         logits = self.X @ w_bar
         return (torch.sigmoid(logits) > 0.5).float()
 

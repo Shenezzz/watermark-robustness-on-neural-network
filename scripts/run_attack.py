@@ -7,6 +7,7 @@ a different attack against the same watermarked model.
  
 Usage:
     python scripts/run_attack.py --config configs/attacks/quantization.yaml
+    python scripts/run_attack.py --config configs/attacks/weight_noise.yaml
 """
 
 import argparse
@@ -25,10 +26,14 @@ from src.watermarks.uchida import UchidaWatermark
 from src.utils.model_utils import get_layer_by_name
 from src.eval.metrics import task_accuracy_retention, watermark_retention
 from src.attacks.quantization import apply_int8_weight_quantization
+from src.attacks.weight_noise import apply_weight_noise
+from src.attacks.deepeclipse import apply_deepeclipse
  
  
 ATTACK_REGISTRY = {
     "quantization": lambda model, cfg: apply_int8_weight_quantization(model, bits=cfg["bits"]),
+    "weight_noise": lambda model, cfg: apply_weight_noise(model, cfg),
+    "deepeclipse": lambda model, cfg: apply_deepeclipse(model, cfg),
     # Add more here as they're implemented, e.g.:
     # "pruning": lambda model, cfg: apply_pruning(model, sparsity=cfg["sparsity"]),
     # "deepeclipse_base": lambda model, cfg: apply_deepeclipse(model, cfg["watermark_layer"], mode="base"),
@@ -77,6 +82,7 @@ def main():
           f"(expect 1.000 -- if not, something is wrong before the attack even runs)")
     
     # Apply attack
+    cfg["_watermark_layer"] = ckpt["watermark_layer"]
     attack_fn = ATTACK_REGISTRY[cfg["attack"]]
     attacked_model = attack_fn(model, cfg).to(device)
     

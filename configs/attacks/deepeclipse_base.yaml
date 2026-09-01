@@ -1,0 +1,11 @@
+watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
+attack: deepeclipse
+mode: base   # "base" = exact function-preserving zero-pad; "advanced" needs next_layer below
+
+checkpoint_dir: ./checkpoints
+checkpoint_name: resnet18_cifar10_uchida_attacked_deepeclipse_base.pt
+
+mlflow:
+  enabled: true
+  experiment_name: dnn-watermark-robustness
+  run_name: resnet18_cifar10_uchida_deepeclipse_base
