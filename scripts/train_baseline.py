@@ -24,14 +24,11 @@ from src.training.loop import train_one_epoch, evaluate
 
 
 MODEL_REGISTRY = {
-    "resnet18_cifar": resnet18_cifar,
-    # LeNet-5/WideResNet get added here once src/models/ has them -- this
-    # script itself won't need to change, only this registry entry.
+    "resnet18_cifar": resnet18_cifar
 }
 
 DATA_REGISTRY = {
-    "cifar10": get_cifar_loaders,
-    # "mnist": get_mnist_loaders, once src/data/loaders.py has it
+    "cifar10": get_cifar_loaders
 }
 
 
@@ -45,7 +42,7 @@ def main():
 
     torch.manual_seed(cfg["seed"])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    os.makedirs(cfg["checkpoint_dir"], exist_ok=True)
+    os.makedirs(cfg["checkpoint_dir"], exist_ok=True) # create a directory, if already existing dont throw an error 
     checkpoint_path = os.path.join(cfg["checkpoint_dir"], cfg["checkpoint_name"])
 
     mlflow_cfg = cfg.get("mlflow", {})
@@ -64,12 +61,14 @@ def main():
 
     optimizer = torch.optim.SGD(model.parameters(), lr=cfg["lr"], momentum=cfg["momentum"],
                                  weight_decay=cfg["weight_decay"], nesterov=True)
+    
+    # to gradually change the learning rate
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg["epochs"])
 
     best_acc = 0.0
     for epoch in range(1, cfg["epochs"] + 1):
         t0 = time.time()
-        train_loss, train_acc = train_one_epoch(model, train_loader, optimizer, device)
+        train_loss, train_acc = train_one_epoch(model, train_loader, optimizer, device) # total_loss / total, correct / total
         test_loss, test_acc = evaluate(model, test_loader, device)
         scheduler.step()
         elapsed = time.time() - t0
