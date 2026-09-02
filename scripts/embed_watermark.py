@@ -27,6 +27,7 @@ from src.models.resnet_cifar import resnet18_cifar
 from src.data.loaders import get_cifar_loaders
 from src.training.loop import train_one_epoch, evaluate
 from src.watermarks.uchida import UchidaWatermark
+from utils.model_utils import get_layer_by_name
 
 # Define a helper function to find a file
 def resolve_path(path, project_root):
@@ -39,14 +40,6 @@ def resolve_path(path, project_root):
         f"Could not find '{path}'.\n  Tried: {os.path.abspath(path)}\n  Tried: {candidate}\n"
         f"  cwd: {os.getcwd()}"
     )
-
-# Defining a helper function to select a conv1 layer for embedding watermark where layer_name comes from the YAML config
-def get_layer_by_name(model, layer_name):
-    """e.g. 'layer3.0.conv1' -> model.layer3[0].conv1"""
-    module = model
-    for part in layer_name.split("."):
-        module = module[int(part)] if part.isdigit() else getattr(module, part)
-    return module
 
 # Watermarking process
 def main():
@@ -75,7 +68,7 @@ def main():
     
     # Setting watermark on chosen layer
     target_layer = get_layer_by_name(model, cfg["watermark_layer"])
-    # To check if the selected layer is actually a Conv, we not we stop
+    # To check if the selected layer is actually a Conv
     assert isinstance(target_layer, torch.nn.Conv2d), \
         f"'{cfg['watermark_layer']}' is not a Conv2d layer -- check the name against `print(model)`"
     wm = UchidaWatermark(target_layer, message_len=cfg["message_len"], seed=cfg["seed"])

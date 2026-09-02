@@ -87,8 +87,8 @@ def main():
     attack_fn = ATTACK_REGISTRY[cfg["attack"]]
     attacked_model = attack_fn(model, cfg).to(device)
     
-    # IMPORTANT: get a fresh layer reference from the ATTACKED model (some
-    # attacks, like this quantization one, deepcopy the model -- the old
+    # Get a fresh layer reference from the ATTACKED model (some
+    # attacks, like this quantization one, deepcopy the model, the old
     # `layer` reference now points at the pre-attack model's weights).
     attacked_layer = get_layer_by_name(attacked_model, ckpt["watermark_layer"])
     wm_after = UchidaWatermark.from_state_dict(attacked_layer, ckpt["watermark_state"])
