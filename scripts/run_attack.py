@@ -2,7 +2,7 @@
 Run an attack against a watermarked checkpoint and measure the result.
  
 This is the script you'll run once per (model, watermark, attack)
-combination -- swap --config to point at a different attack config to test
+combination. swap --config to point at a different attack config to test
 a different attack against the same watermarked model.
  
 Usage:
@@ -10,14 +10,14 @@ Usage:
     python scripts/run_attack.py --config configs/attacks/weight_noise.yaml
 """
 
-import argparse
-import os
-import sys
+import argparse # Used to handle command line arguements
+import os # Provides function that helps to interact with the OS. Commonly used to handle file directories
+import sys  
  
-import torch
-import yaml
+import torch # Commonly used library for constructing neural networks
+import yaml # Used to read configs from yaml files
  
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # To find the porjects root directory
  
 from src.models.resnet_cifar import resnet18_cifar
 from src.data.loaders import get_cifar_loaders
@@ -29,19 +29,17 @@ from src.attacks.quantization import apply_int8_weight_quantization
 from src.attacks.weight_noise import apply_weight_noise
 from src.attacks.deepeclipse import apply_deepeclipse
  
- 
+
+# Creaating a registry of attacks. YAML files inside configs/attacks contains the arguments that
+# needs to be passed to run an attack including the attack name. so when we get an attack name the 
+# the registry knows which function to call.
 ATTACK_REGISTRY = {
     "quantization": lambda model, cfg: apply_int8_weight_quantization(model, bits=cfg["bits"]),
     "weight_noise": lambda model, cfg: apply_weight_noise(model, cfg),
     "deepeclipse": lambda model, cfg: apply_deepeclipse(model, cfg),
-    # Add more here as they're implemented, e.g.:
-    # "pruning": lambda model, cfg: apply_pruning(model, sparsity=cfg["sparsity"]),
-    # "deepeclipse_base": lambda model, cfg: apply_deepeclipse(model, cfg["watermark_layer"], mode="base"),
-    # run_attack.py itself won't need to change when new attacks are added --
-    # only this registry, plus a new configs/attacks/<name>.yaml.
 }
 
-# Defining a helper function to find a file
+# Defining a helper function to find a file and if not found, return an error
 def resolve_path(path, project_root):
     if os.path.exists(path):
         return path
@@ -54,6 +52,7 @@ def resolve_path(path, project_root):
     )
 
 def main():
+    # We are creating an object of argparsesr to make the "--config" required command line arguemnt. without "--config" will fail  
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
     args = parser.parse_args()
@@ -71,9 +70,11 @@ def main():
     ckpt = torch.load(ckpt_path, map_location=device)
     baseline_test_acc = ckpt["baseline_test_acc"]
     
+    # Directly importing a specific model here. needs work !!
     model = resnet18_cifar(num_classes=10).to(device)
     model.load_state_dict(ckpt["model_state_dict"])
     
+    # Acces the layer that is watermarked
     layer = get_layer_by_name(model, ckpt["watermark_layer"])
     wm = UchidaWatermark.from_state_dict(layer, ckpt["watermark_state"])
     

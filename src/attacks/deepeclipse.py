@@ -45,6 +45,7 @@ def rank_candidate_layers(model: nn.Module, window: int = 50):
 # ---------------------------------------------------------------------------
 def base_conv_obfuscation(conv: nn.Conv2d):
     device, dtype = conv.weight.device, conv.weight.dtype
+    print(device,dtype)
     new_weight = F.pad(conv.weight.data, (1, 1, 1, 1), value=0.0)
     old_pad = conv.padding if isinstance(conv.padding, tuple) else (conv.padding, conv.padding)
     new_conv = nn.Conv2d(
