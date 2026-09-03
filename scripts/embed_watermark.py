@@ -56,7 +56,8 @@ def main():
     torch.manual_seed(cfg["seed_train"]) # for reproducibility during fine tuning
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-     # Load the trained baseline
+    
+    # Load the trained baseline
     baseline_path = resolve_path(cfg["baseline_checkpoint"], project_root)
     baseline = torch.load(baseline_path, map_location=device)
     baseline_acc = baseline["test_acc"]
@@ -114,7 +115,7 @@ def main():
         if bit_acc == 1.0 and epoch >= 3:
             # Once the watermark is fully embedded and a few epochs have
             # passed to let accuracy stabilize around it, no need to keep
-            # fine-tuning further -- extra epochs mostly risk accuracy drift.
+            # fine-tuning further, extra epochs mostly risk accuracy drift.
             print("Watermark fully embedded (bit_acc = 1.0) -- stopping early.")
             break
             

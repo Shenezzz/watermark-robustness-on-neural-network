@@ -10,16 +10,26 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class BasicBlock(nn.Module):
-    expansion = 1
+    expansion = 1 # Defines how the output channel changes
  
     def __init__(self, in_planes, planes, stride=1):
         super().__init__()
+        # in_planes : input channels
+        # planes : out channels
+        
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
  
+        # The shortcut
         self.shortcut = nn.Sequential()
+        # Condition are :
+        # 1) if the spatial size of changes (32x32 -> 16x16)
+        # 2) if the number of channels change (64 -> 128)
+        # So down the convolutions, the spatial size or number of channels may change and this may cause
+        # a problem as we cannot add the main path and the shortcut path due to missmatch in their shapes.
+        # So now the if block is only executed if there is a mismatch in their shapes to faciliate shortcut + main path.
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
