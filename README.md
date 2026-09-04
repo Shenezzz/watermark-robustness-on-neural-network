@@ -30,3 +30,10 @@ Attack: Pruning
         watermark_retention:      0.938  (1.0 = fully intact, ~0.5 = destroyed)
         task_accuracy_retention:  0.105  (attacked_acc=0.1000 / baseline_acc=0.9479)
 
+Attack: Fine Tune
+    FTAL: 
+        watermark_retention:      1.000  (1.0 = fully intact, ~0.5 = destroyed)
+        task_accuracy_retention:  0.996  (attacked_acc=0.9443 / baseline_acc=0.9479)
+    RTAL:
+        watermark_retention:      1.000  (1.0 = fully intact, ~0.5 = destroyed)
+        task_accuracy_retention:  0.981  (attacked_acc=0.9297 / baseline_acc=0.9479)  

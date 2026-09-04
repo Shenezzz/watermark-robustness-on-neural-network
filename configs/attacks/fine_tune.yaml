@@ -1,0 +1,14 @@
+watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
+attack: fine_tune
+mode: rtal
+epochs: 5
+lr: 0.001        # much lower than baseline training's 0.1 -- this is fine-tuning, not training from scratch
+batch_size: 128
+
+checkpoint_dir: ./checkpoints
+checkpoint_name: resnet18_cifar10_uchida_attacked_rtal.pt
+
+mlflow:
+  enabled: false
+  experiment_name: dnn-watermark-robustness
+  run_name: resnet18_cifar10_uchida_rtal

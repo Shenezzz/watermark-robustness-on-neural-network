@@ -11,6 +11,7 @@ Usage:
     python scripts/run_attack.py --config configs/attacks/deepeclipse_base.yaml
     python scripts/run_attack.py --config configs/attacks/deepeclipse_advanced.yaml
     python scripts/run_attack.py --config configs/attacks/pruning.yaml
+    python scripts/run_attack.py --config configs/attacks/fine_tune.yaml
 """
 
 import argparse # Used to handle command line arguements
@@ -32,6 +33,7 @@ from src.attacks.quantization import apply_int8_weight_quantization
 from src.attacks.weight_noise import apply_weight_noise
 from src.attacks.deepeclipse import apply_deepeclipse
 from src.attacks.pruning import apply_pruning
+from src.attacks.fine_tune import apply_fine_tune
  
 
 # Creaating a registry of attacks. YAML files inside configs/attacks contains the arguments that
@@ -42,6 +44,7 @@ ATTACK_REGISTRY = {
     "weight_noise": lambda model, cfg: apply_weight_noise(model, cfg),
     "deepeclipse": lambda model, cfg: apply_deepeclipse(model, cfg),
     "pruning": lambda model, cfg: apply_pruning(model, cfg),
+    "fine_tune": lambda model, cfg: apply_fine_tune(model, cfg),
 }
 
 # Defining a helper function to find a file and if not found, return an error
