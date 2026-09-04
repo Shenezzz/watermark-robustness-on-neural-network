@@ -45,7 +45,6 @@ def rank_candidate_layers(model: nn.Module, window: int = 50):
 # ---------------------------------------------------------------------------
 def base_conv_obfuscation(conv: nn.Conv2d):
     device, dtype = conv.weight.device, conv.weight.dtype
-    print(device,dtype)
     new_weight = F.pad(conv.weight.data, (1, 1, 1, 1), value=0.0)
     old_pad = conv.padding if isinstance(conv.padding, tuple) else (conv.padding, conv.padding)
     new_conv = nn.Conv2d(
@@ -61,18 +60,31 @@ def base_conv_obfuscation(conv: nn.Conv2d):
 
 
 def advanced_conv_obfuscation(conv: nn.Conv2d, next_conv: nn.Conv2d,
-                               beta: float = 10.0, mu: float = 0.33, sigma: float = 0.1):
+                               beta: float = 10.0, mu: float = 0.33, sigma: float = 0.1,
+                               stat: str = "min", seed: int = None):
     device, dtype = conv.weight.device, conv.weight.dtype
+    generator = torch.Generator(device=device) if seed is not None else None
+    if generator is not None:
+        generator.manual_seed(seed)
+
     padded = F.pad(conv.weight.data, (1, 1, 1, 1), value=0.0)
     P = padded.shape[0]
     for p in range(P):
         filt = conv.weight.data[p]
-        eps_p = beta * filt.abs().median().item() * torch.normal(mean=mu, std=sigma, size=(1,)).item()
+        # In Algorithm 3 (AdvConvObfuscation) of the DeepEclipse paper (USENIX 2024),
+        # eps is computed using min(|K^p|). Using median on high-channel layers injects
+        # excessive cumulative border noise, causing model collapse.
+        scale = filt.abs().min().item() if stat == "min" else filt.abs().median().item()
+        noise = torch.normal(mean=mu, std=sigma, size=(1,), generator=generator).item()
+        eps_p = beta * scale * noise
         border_mask = torch.ones_like(padded[p])
         border_mask[:, 1:-1, 1:-1] = 0
         padded[p] = padded[p] + border_mask * eps_p
 
-    lam = float(torch.empty(1).uniform_(0.5, 1.5))
+    if generator is not None:
+        lam = float(torch.empty(1).uniform_(0.5, 1.5, generator=generator))
+    else:
+        lam = float(torch.empty(1).uniform_(0.5, 1.5))
     old_pad = conv.padding if isinstance(conv.padding, tuple) else (conv.padding, conv.padding)
 
     new_conv = nn.Conv2d(
@@ -148,7 +160,15 @@ def apply_deepeclipse(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
         next_layer = _get_layer_by_name(attacked, next_name)
         assert isinstance(next_layer, nn.Conv2d), \
             f"'next_layer' must be a Conv2d layer, got {type(next_layer)}"
-        new_target, new_next = advanced_conv_obfuscation(target_layer, next_layer)
+        beta = cfg.get("beta", 10.0)
+        mu = cfg.get("mu", 0.33)
+        sigma = cfg.get("sigma", 0.1)
+        stat = cfg.get("stat", "min")
+        seed = cfg.get("seed", None)
+        new_target, new_next = advanced_conv_obfuscation(
+            target_layer, next_layer,
+            beta=beta, mu=mu, sigma=sigma, stat=stat, seed=seed,
+        )
         _set_layer_by_name(attacked, target_name, new_target)
         _set_layer_by_name(attacked, next_name, new_next)
     else:

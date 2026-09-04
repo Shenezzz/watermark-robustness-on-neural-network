@@ -8,6 +8,9 @@ a different attack against the same watermarked model.
 Usage:
     python scripts/run_attack.py --config configs/attacks/quantization.yaml
     python scripts/run_attack.py --config configs/attacks/weight_noise.yaml
+    python scripts/run_attack.py --config configs/attacks/deepeclipse_base.yaml
+    python scripts/run_attack.py --config configs/attacks/deepeclipse_advanced.yaml
+    python scripts/run_attack.py --config configs/attacks/pruning.yaml
 """
 
 import argparse # Used to handle command line arguements
@@ -28,6 +31,7 @@ from src.eval.metrics import task_accuracy_retention, watermark_retention
 from src.attacks.quantization import apply_int8_weight_quantization
 from src.attacks.weight_noise import apply_weight_noise
 from src.attacks.deepeclipse import apply_deepeclipse
+from src.attacks.pruning import apply_pruning
  
 
 # Creaating a registry of attacks. YAML files inside configs/attacks contains the arguments that
@@ -37,6 +41,7 @@ ATTACK_REGISTRY = {
     "quantization": lambda model, cfg: apply_int8_weight_quantization(model, bits=cfg["bits"]),
     "weight_noise": lambda model, cfg: apply_weight_noise(model, cfg),
     "deepeclipse": lambda model, cfg: apply_deepeclipse(model, cfg),
+    "pruning": lambda model, cfg: apply_pruning(model, cfg),
 }
 
 # Defining a helper function to find a file and if not found, return an error

@@ -20,3 +20,13 @@ Attack: Deepeclipse Base
 Attack: Aeepeclipse Advanced
   watermark_retention:      0.000  (1.0 = fully intact, ~0.5 = destroyed)
   task_accuracy_retention:  0.105  (attacked_acc=0.1000 / baseline_acc=0.9479)
+
+Attack: Pruning
+    sparaity : 50
+        watermark_retention:      1.000  (1.0 = fully intact, ~0.5 = destroyed)
+        task_accuracy_retention:  0.282  (attacked_acc=0.2669 / baseline_acc=0.9479)
+
+    sparaity : 99.5
+        watermark_retention:      0.938  (1.0 = fully intact, ~0.5 = destroyed)
+        task_accuracy_retention:  0.105  (attacked_acc=0.1000 / baseline_acc=0.9479)
+

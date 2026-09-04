@@ -58,11 +58,10 @@ class UchidaWatermark:
         w_bar = self._weight_vector()
         if w_bar.numel() != self.X.shape[1]:
             # The attack changed this layer's weight shape (e.g. DeepEclipse's
-            # kernel padding). Extraction is not just noisy here, it's
-            # structurally impossible with the original key -- report as
-            # fully broken (chance-level) rather than crashing the whole
-            # attack sweep on a shape-mismatch error.
-            return torch.full_like(self.target_bits, 0.5)
+            # kernel padding). Extraction is structurally impossible with the
+            # original key -- return random binary guesses at chance-level.
+            gen = torch.Generator(device=self.target_bits.device).manual_seed(0)
+            return (torch.rand(self.message_len, generator=gen, device=self.target_bits.device) > 0.5).float()
         logits = self.X @ w_bar
         return (torch.sigmoid(logits) > 0.5).float()
 
@@ -71,6 +70,12 @@ class UchidaWatermark:
         """Watermark retention metric: fraction of bits that still match the
         secret payload. 1.0 = fully intact. ~0.5 = watermark destroyed
         (indistinguishable from random guessing on a binary string)."""
+        w_bar = self._weight_vector()
+        if w_bar.numel() != self.X.shape[1]:
+            # When weight shape is modified, passive extraction cannot proceed
+            # with the original key (No Signature). Expected accuracy under
+            # random guessing on a binary payload is 0.5.
+            return 0.5
         extracted = self.extract_message()
         return (extracted == self.target_bits).float().mean().item()
 
