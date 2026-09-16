@@ -2,7 +2,7 @@ model: lenet5
 dataset: mnist
 num_classes: 10
 
-epochs: 20              # MNIST converges much faster than CIFAR-10 far fewer epochs needed
+epochs: 20              # MNIST converges much faster than CIFAR-10p far fewer epochs needed
 batch_size: 128
 lr: 0.01                 # LeNet-5/MNIST tolerates a smaller lr than the ResNet-18/CIFAR-10 baseline's 0.1
 momentum: 0.9

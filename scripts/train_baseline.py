@@ -3,6 +3,7 @@ Train a clean (non-watermarked) baseline model from a config file.
 
 Usage:
     python scripts/train_baseline.py --config configs/models/resnet18_cifar10.yaml
+    python scripts/train_baseline.py --config configs/models/lenet5_mnist.yaml
 
 Run from the project root (dnn-watermark-robustness/) so the src.* imports
 resolve, or install the project with `pip install -e .` for a proper package.
@@ -19,7 +20,7 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # project root, for `src.*` imports
 
 from src.models.resnet_cifar import resnet18_cifar
-from src.models.letnet import lenet5
+from src.models.lenet5 import lenet5
 
 from src.data.loaders import get_cifar_loaders
 from src.data.loaders import get_mnist_loader
