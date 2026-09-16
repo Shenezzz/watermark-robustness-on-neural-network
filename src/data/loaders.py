@@ -72,3 +72,8 @@ def get_mnist_loader(batch_size=128, data_root="./data", num_workers=2):
     )
 
     return train_loader, test_loader
+
+
+if __name__ == "__main__":
+    get_mnist_loader(batch_size=128, data_root="./data", num_workers=2)
+    

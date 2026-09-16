@@ -19,16 +19,22 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # project root, for `src.*` imports
 
 from src.models.resnet_cifar import resnet18_cifar
+from src.models.letnet import lenet5
+
 from src.data.loaders import get_cifar_loaders
+from src.data.loaders import get_mnist_loader
+
 from src.training.loop import train_one_epoch, evaluate
 
 
 MODEL_REGISTRY = {
-    "resnet18_cifar": resnet18_cifar
+    "resnet18_cifar": resnet18_cifar,
+    "lenet5": lenet5
 }
 
 DATA_REGISTRY = {
-    "cifar10": get_cifar_loaders
+    "cifar10": get_cifar_loaders,
+    "mnist": get_mnist_loader
 }
 
 
