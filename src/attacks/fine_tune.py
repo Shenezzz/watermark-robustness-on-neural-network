@@ -5,13 +5,13 @@ literature is inconsistent; what matters is the distinction: FTAL updates
 every parameter, RTAL freezes everything except the final classifier layer).
 
 Unlike the other attacks, this one needs real training data and multiple
-epochs -- it reuses train_one_epoch from src/training/loop.py directly,
+epochs it reuses train_one_epoch from src/training/loop.py directly,
 the same function baseline training and watermark embedding both use.
 
 RTAL is the interesting robustness test for a WEIGHT-based watermark like
 Uchida's: if the watermarked layer is anywhere except the final classifier,
 RTAL should leave it completely untouched (gradients never reach it), so
-watermark_retention should come back EXACTLY 1.0 -- not approximately, but
+watermark_retention should come back EXACTLY 1.0 - not approximately, but
 bit-for-bit identical to before the attack. That's a useful sanity check in
 itself, separate from being an interesting attack result.
 """
@@ -25,6 +25,7 @@ from src.training.loop import train_one_epoch
 
 
 def apply_fine_tune(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
+    print(model)
     mode = cfg["mode"]  # "ftal" or "rtal"
     epochs = cfg["epochs"]
     lr = cfg["lr"]
