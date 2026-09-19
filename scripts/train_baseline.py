@@ -23,7 +23,7 @@ from src.models.resnet_cifar import resnet18_cifar
 from src.models.lenet5 import lenet5
 
 from src.data.loaders import get_cifar_loaders
-from src.data.loaders import get_mnist_loader
+from src.data.loaders import get_mnist_loaders
 
 from src.training.loop import train_one_epoch, evaluate
 
@@ -35,7 +35,7 @@ MODEL_REGISTRY = {
 
 DATA_REGISTRY = {
     "cifar10": get_cifar_loaders,
-    "mnist": get_mnist_loader
+    "mnist": get_mnist_loaders
 }
 
 

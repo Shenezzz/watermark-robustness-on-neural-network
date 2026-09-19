@@ -1,0 +1,25 @@
+model: lenet5
+dataset: mnist
+num_classes: 10
+
+baseline_checkpoint: ./checkpoints/lenet5_mnist_baseline.pt
+watermark_layer: conv2   # deeper of LeNet-5's two conv layers (6->16 channels) -- vector_len = 6*5*5 = 150, plenty of capacity for 32 bits
+
+message_len: 32
+seed: 123
+lambda_wm: 0.1
+
+epochs: 10
+batch_size: 128
+lr: 0.005               # lower than the 0.01 baseline lr -- this is fine-tuning, not training from scratch
+momentum: 0.9
+weight_decay: 0.0005
+seed_train: 42
+
+checkpoint_dir: ./checkpoints
+checkpoint_name: lenet5_mnist_uchida.pt
+
+mlflow:
+  enabled: false
+  experiment_name: dnn-watermark-robustness
+  run_name: lenet5_mnist_uchida_embed

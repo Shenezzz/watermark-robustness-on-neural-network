@@ -10,7 +10,7 @@ embedded in practice.
 L(total) = L(training) + A*L(watermark)
 
 
-Run command : python scripts/embed_watermark.py --config configs/watermarks/uchida.yaml
+Run command : python scripts/embed_watermark.py --config configs/watermarks/uchida_resnet.yaml
 """
 
 import argparse
@@ -24,10 +24,24 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # find the project root and adds into the projects import path
 
 from src.models.resnet_cifar import resnet18_cifar
+from src.models.lenet5 import lenet5
+
 from src.data.loaders import get_cifar_loaders
+from src.data.loaders import get_mnist_loaders
+
 from src.training.loop import train_one_epoch, evaluate
 from src.watermarks.uchida import UchidaWatermark
-from utils.model_utils import get_layer_by_name
+from src.utils.model_utils import get_layer_by_name
+
+MODEL_REGISTRY = {
+    "resnet18_cifar": resnet18_cifar,
+    "lenet5": lenet5,
+}
+ 
+DATA_REGISTRY = {
+    "cifar10": get_cifar_loaders,
+    "mnist": get_mnist_loaders,
+}
 
 # Define a helper function to find a file
 def resolve_path(path, project_root):
@@ -63,7 +77,7 @@ def main():
     baseline_acc = baseline["test_acc"]
     print(f"Loaded baseline checkpoint -- baseline test_acc = {baseline_acc:.4f}")
     
-    model = resnet18_cifar(num_classes=10).to(device) # Creating a new ResNet-18 Note: At this moment the weights are randomly initialzed
+    model = MODEL_REGISTRY[cfg["model"]](num_classes=cfg["num_classes"]).to(device) # Creating a new ResNet-18 Note: At this moment the weights are randomly initialzed
     model.load_state_dict(baseline["model_state_dict"]) # replace random weights with baseline weights.
     # Note: Now "model" is a clean trained ResNet
     
@@ -77,7 +91,7 @@ def main():
           f"-- initial bit accuracy (should be ~0.5, i.e. unembedded): {wm.bit_accuracy():.3f}")
 
     # Fine-tune with the watermark loss added in 
-    train_loader, test_loader = get_cifar_loaders(batch_size=cfg["batch_size"])
+    train_loader, test_loader = DATA_REGISTRY[cfg["dataset"]](batch_size=cfg["batch_size"])
     optimizer = torch.optim.SGD(model.parameters(), lr=cfg["lr"], momentum=cfg["momentum"],
                                  weight_decay=cfg["weight_decay"], nesterov=True)
  
@@ -91,7 +105,7 @@ def main():
         mlflow.set_experiment(mlflow_cfg["experiment_name"])
         mlflow.start_run(run_name=mlflow_cfg["run_name"])
         mlflow.log_params({
-            "model": "resnet18_cifar", "watermark_scheme": "uchida", "attack": "none",
+            "model": cfg["model"], "watermark_scheme": "uchida", "attack": "none",
             "watermark_layer": cfg["watermark_layer"], "message_len": cfg["message_len"],
             "lambda_wm": lambda_wm, "epochs": cfg["epochs"],
         })
@@ -124,6 +138,8 @@ def main():
     checkpoint_path = os.path.join(cfg["checkpoint_dir"], cfg["checkpoint_name"])
     torch.save({
         "model_state_dict": model.state_dict(), 
+        "model": cfg["model"],
+        "dataset": cfg["dataset"],
         "test_acc": test_acc,
         "baseline_test_acc": baseline_acc,
         "watermark_scheme": "uchida",

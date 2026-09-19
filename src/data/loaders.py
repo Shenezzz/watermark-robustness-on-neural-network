@@ -48,7 +48,7 @@ def get_cifar_loaders(batch_size=128, data_root="./data", num_workers=2):
     return train_loader, test_loader
 
 
-def get_mnist_loader(batch_size=128, data_root="./data", num_workers=2):
+def get_mnist_loaders(batch_size=128, data_root="./data", num_workers=2):
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize(MNIST_MEAN, MNIST_STD)]
     )
@@ -75,5 +75,5 @@ def get_mnist_loader(batch_size=128, data_root="./data", num_workers=2):
 
 
 if __name__ == "__main__":
-    get_mnist_loader(batch_size=128, data_root="./data", num_workers=2)
+    get_mnist_loaders(batch_size=128, data_root="./data", num_workers=2)
     
