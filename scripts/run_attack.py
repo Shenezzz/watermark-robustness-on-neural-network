@@ -28,8 +28,7 @@ sys.path.insert(
 from src.models.resnet_cifar import resnet18_cifar
 from src.models.lenet5 import lenet5
 
-from src.data.loaders import get_cifar_loaders
-from src.data.loaders import get_mnist_loaders
+from src.data.loaders import get_cifar_loaders,get_mnist_loaders
 
 from src.watermarks.uchida import UchidaWatermark
 
@@ -92,10 +91,10 @@ def main():
     ckpt = torch.load(ckpt_path, map_location=device)
     baseline_test_acc = ckpt["baseline_test_acc"]
 
-    # Directly importing a specific model here. needs work !!
-    model = MODEL_REGISTRY[ckpt.get("model", "resnet18_cifar")](num_classes=10).to(
+    model = MODEL_REGISTRY[ckpt.get("model")](num_classes=10).to(
         device
     )
+    
     model.load_state_dict(ckpt["model_state_dict"])
 
     # Acces the layer that is watermarked
@@ -120,7 +119,7 @@ def main():
     wm_after = UchidaWatermark.from_state_dict(attacked_layer, ckpt["watermark_state"])
 
     # Measure metrics
-    _, test_loader = DATA_REGISTRY[ckpt.get("dataset", "cifar10")](batch_size=256)
+    _, test_loader = DATA_REGISTRY[ckpt.get("dataset")](batch_size=256)
     _, attacked_test_acc = evaluate(attacked_model, test_loader, device)
 
     wm_retention = watermark_retention(wm_after.bit_accuracy())

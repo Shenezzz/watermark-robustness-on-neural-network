@@ -1,6 +1,7 @@
 watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
 attack: pruning
 sparsity: 0.995
+dataset: cifar10
 
 checkpoint_dir: ./checkpoints
 checkpoint_name: resnet18_cifar10_uchida_attacked_pruning_995.pt

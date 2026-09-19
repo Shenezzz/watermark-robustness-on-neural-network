@@ -2,6 +2,7 @@ watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
 attack: deepeclipse
 mode: advanced
 next_layer: layer3.0.conv2   # the conv immediately downstream of layer3.0.conv1 in the same BasicBlock
+dataset: cifar10
 
 checkpoint_dir: ./checkpoints
 checkpoint_name: resnet18_cifar10_uchida_attacked_deepeclipse_advanced.pt

@@ -1,0 +1,12 @@
+watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
+attack: quantization
+bits: 8
+dataset: mnist
+ 
+checkpoint_dir: ./checkpoints
+checkpoint_name: lenet5_mnist_uchida_attacked_quantization.pt
+ 
+mlflow:
+  enabled: true
+  experiment_name: dnn-watermark-robustness
+  run_name: lenet5_mnist_uchida_quantization

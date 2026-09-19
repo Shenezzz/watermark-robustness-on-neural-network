@@ -25,7 +25,6 @@ from src.training.loop import train_one_epoch
 
 
 def apply_fine_tune(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
-    print(model)
     mode = cfg["mode"]  # "ftal" or "rtal"
     epochs = cfg["epochs"]
     lr = cfg["lr"]
@@ -38,8 +37,17 @@ def apply_fine_tune(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
         for param in attacked.parameters():
             param.requires_grad = True
     elif mode == "rtal":
+        final_layer_name = cfg.get("final_layer_name", "fc")
+        prefix = final_layer_name + "."
         for name, param in attacked.named_parameters():
-            param.requires_grad = name.startswith("fc.")  # only the final classifier layer
+            param.requires_grad = name.startswith(prefix)
+        n_trainable = sum(p.requires_grad for p in attacked.parameters())
+        if n_trainable == 0:
+            raise ValueError(
+                f"RTAL froze every parameter -- no name matched prefix '{prefix}'. "
+                f"Set 'final_layer_name' in the attack config to match the model's actual "
+                f"final layer attribute name (check via print(model))."
+            )
     else:
         raise ValueError(f"Unknown fine-tune mode: {mode!r} (expected 'ftal' or 'rtal')")
 
