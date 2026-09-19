@@ -1,0 +1,15 @@
+watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
+attack: deepeclipse
+mode: base
+# NOTE: advanced mode is NOT usable against this checkpoint -- conv2 is
+# LeNet-5's last conv layer, immediately followed by a Linear layer (fc1),
+# so there's no downstream Conv2d to fuse the lambda-scaling into. Only
+# base mode (which needs no next_layer) works here.
+
+checkpoint_dir: ./checkpoints
+checkpoint_name: lenet5_mnist_uchida_attacked_deepeclipse_base.pt
+
+mlflow:
+  enabled: false
+  experiment_name: dnn-watermark-robustness
+  run_name: lenet5_mnist_uchida_deepeclipse_base

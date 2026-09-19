@@ -6,12 +6,22 @@ combination. swap --config to point at a different attack config to test
 a different attack against the same watermarked model.
 
 Usage:
-    python scripts/run_attack.py --config configs/attacks/quantization.yaml
-    python scripts/run_attack.py --config configs/attacks/weight_noise.yaml
-    python scripts/run_attack.py --config configs/attacks/deepeclipse_base.yaml
-    python scripts/run_attack.py --config configs/attacks/deepeclipse_advanced.yaml
-    python scripts/run_attack.py --config configs/attacks/pruning.yaml
-    python scripts/run_attack.py --config configs/attacks/fine_tune.yaml
+
+ResNet-18 : 
+    python scripts/run_attack.py --config configs/attacks/ResNet18/quantization.yaml
+    python scripts/run_attack.py --config configs/attacks/ResNet18/weight_noise.yaml
+    python scripts/run_attack.py --config configs/attacks/ResNet18/deepeclipse_base.yaml
+    python scripts/run_attack.py --config configs/attacks/ResNet18/deepeclipse_advanced.yaml
+    python scripts/run_attack.py --config configs/attacks/ResNet18/pruning.yaml
+    python scripts/run_attack.py --config configs/attacks/ResNet18/fine_tune.yaml
+
+LeNet5 :
+    python scripts/run_attack.py --config configs/attacks/LeNet5/quantization.yaml
+    python scripts/run_attack.py --config configs/attacks/LeNet5/weight_noise.yaml
+    python scripts/run_attack.py --config configs/attacks/LeNet5/deepeclipse_base.yaml
+    python scripts/run_attack.py --config configs/attacks/LeNet5/deepeclipse_advanced.yaml
+    python scripts/run_attack.py --config configs/attacks/LeNet5/pruning.yaml
+    python scripts/run_attack.py --config configs/attacks/LeNet5/fine_tune.yaml
 """
 
 import argparse  # Used to handle command line arguements
@@ -42,7 +52,7 @@ from src.attacks.deepeclipse import apply_deepeclipse
 from src.attacks.pruning import apply_pruning
 from src.attacks.fine_tune import apply_fine_tune
 
-# Creaating a registry of attacks. YAML files inside configs/attacks contains the arguments that
+# Creaating a registry of attacks. YAML files inside configs/attacks/ResNet18 contains the arguments that
 # needs to be passed to run an attack including the attack name. so when we get an attack name the
 # the registry knows which function to call.
 ATTACK_REGISTRY = {
@@ -91,9 +101,7 @@ def main():
     ckpt = torch.load(ckpt_path, map_location=device)
     baseline_test_acc = ckpt["baseline_test_acc"]
 
-    model = MODEL_REGISTRY[ckpt.get("model")](num_classes=10).to(
-        device
-    )
+    model = MODEL_REGISTRY[ckpt.get("model")](num_classes=10).to(device)
     
     model.load_state_dict(ckpt["model_state_dict"])
 

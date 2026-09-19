@@ -1,0 +1,12 @@
+watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
+attack: weight_noise
+relative_std: 0.05
+seed: 7
+
+checkpoint_dir: ./checkpoints
+checkpoint_name: lenet5_mnist_uchida_attacked_weight_noise.pt
+
+mlflow:
+  enabled: false
+  experiment_name: dnn-watermark-robustness
+  run_name: lenet5_mnist_uchida_weight_noise

@@ -20,8 +20,10 @@ import copy
 
 import torch
 
-from src.data.loaders import get_cifar_loaders
+from src.data.loaders import get_cifar_loaders,get_mnist_loaders
 from src.training.loop import train_one_epoch
+
+DATA_REGISTRY = {"cifar10": get_cifar_loaders, "mnist": get_mnist_loaders}
 
 
 def apply_fine_tune(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
@@ -54,7 +56,7 @@ def apply_fine_tune(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
     trainable_params = [p for p in attacked.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(trainable_params, lr=lr, momentum=0.9, weight_decay=5e-4)
 
-    train_loader, _ = get_cifar_loaders(batch_size=batch_size)
+    train_loader, _ = DATA_REGISTRY[cfg["dataset"]](batch_size=batch_size)
     for epoch in range(epochs):
         train_loss, train_acc = train_one_epoch(attacked, train_loader, optimizer, device)
         print(f"  [fine_tune/{mode}] epoch {epoch + 1}/{epochs} | train_loss {train_loss:.4f} | train_acc {train_acc:.4f}")

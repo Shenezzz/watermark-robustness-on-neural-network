@@ -1,0 +1,11 @@
+watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
+attack: pruning
+sparsity: 0.90
+
+checkpoint_dir: ./checkpoints
+checkpoint_name: lenet5_mnist_uchida_attacked_pruning_90.pt
+
+mlflow:
+  enabled: false
+  experiment_name: dnn-watermark-robustness
+  run_name: lenet5_mnist_uchida_pruning_90
