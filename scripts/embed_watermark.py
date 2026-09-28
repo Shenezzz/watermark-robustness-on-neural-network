@@ -26,6 +26,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
 from src.models.resnet_cifar import resnet18_cifar
 from src.models.lenet5 import lenet5
 
+from src.utils.load_config_and_checkpoint import load_config_and_checkpoint
+
 from src.data.loaders import get_cifar_loaders
 from src.data.loaders import get_mnist_loaders
 
@@ -46,28 +48,13 @@ DATA_REGISTRY = {
 
 # Watermarking process
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True)
-    args = parser.parse_args() # now args.config will contain "--config configs/watermarks/uchida.yaml"
-    
-    # Finds the YAML file and converts the YAML key-value to dictionary
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = resolve_path(args.config, project_root)
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
-        
-    torch.manual_seed(cfg["seed_train"]) # for reproducibility during fine tuning
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    
-    # Load the trained baseline
-    baseline_path = resolve_path(cfg["baseline_checkpoint"], project_root)
-    baseline = torch.load(baseline_path, map_location=device)
-    baseline_acc = baseline["test_acc"]
-    print(f"Loaded baseline checkpoint -- baseline test_acc = {baseline_acc:.4f}")
+    cfg, device, ckpt, baseline_test_acc = (
+            load_config_and_checkpoint("test_acc")
+        )
+    print(f"Loaded baseline checkpoint -- baseline test_acc = {baseline_test_acc:.4f}")
     
     model = MODEL_REGISTRY[cfg["model"]](num_classes=cfg["num_classes"]).to(device) # Creating a new ResNet-18 Note: At this moment the weights are randomly initialzed
-    model.load_state_dict(baseline["model_state_dict"]) # replace random weights with baseline weights.
+    model.load_state_dict(ckpt["model_state_dict"]) # replace random weights with baseline weights.
     # Note: Now "model" is a clean trained ResNet
     
     # Setting watermark on chosen layer

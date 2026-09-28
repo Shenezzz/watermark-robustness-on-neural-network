@@ -43,8 +43,10 @@ from src.data.loaders import get_cifar_loaders,get_mnist_loaders
 from src.watermarks.uchida import UchidaWatermark
 
 from src.training.loop import evaluate
+
 from src.utils.model_utils import get_layer_by_name
-from src.utils.path_resolver import resolve_path
+from src.utils.load_config_and_checkpoint import load_config_and_checkpoint
+
 from src.eval.metrics import task_accuracy_retention, watermark_retention
 
 from src.attacks.quantization import apply_int8_weight_quantization
@@ -70,23 +72,9 @@ MODEL_REGISTRY = {"resnet18_cifar": resnet18_cifar, "lenet5": lenet5}
 DATA_REGISTRY = {"cifar10": get_cifar_loaders, "mnist": get_mnist_loaders}
 
 def main():
-    # We are creating an object of argparsesr to make the "--config" required command line arguemnt. without "--config" will fail
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True)
-    args = parser.parse_args()
-
-    # Finds the YAML file and converts the YAML key-value to dictionary
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = resolve_path(args.config, project_root)
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Load the watermarked checkpoint
-    ckpt_path = resolve_path(cfg["watermarked_checkpoint"], project_root)
-    ckpt = torch.load(ckpt_path, map_location=device)
-    baseline_test_acc = ckpt["baseline_test_acc"]
+    cfg, device, ckpt, baseline_test_acc = (
+        load_config_and_checkpoint("baseline_test_acc")
+    )
 
     model = MODEL_REGISTRY[ckpt.get("model")](num_classes=10).to(device)
     
