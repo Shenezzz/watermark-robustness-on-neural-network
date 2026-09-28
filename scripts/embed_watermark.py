@@ -32,6 +32,7 @@ from src.data.loaders import get_mnist_loaders
 from src.training.loop import train_one_epoch, evaluate
 from src.watermarks.uchida import UchidaWatermark
 from src.utils.model_utils import get_layer_by_name
+from src.utils.path_resolver import resolve_path
 
 MODEL_REGISTRY = {
     "resnet18_cifar": resnet18_cifar,
@@ -42,18 +43,6 @@ DATA_REGISTRY = {
     "cifar10": get_cifar_loaders,
     "mnist": get_mnist_loaders,
 }
-
-# Define a helper function to find a file
-def resolve_path(path, project_root):
-    if os.path.exists(path):
-        return path
-    candidate = os.path.join(project_root, path)
-    if os.path.exists(candidate):
-        return candidate
-    raise FileNotFoundError(
-        f"Could not find '{path}'.\n  Tried: {os.path.abspath(path)}\n  Tried: {candidate}\n"
-        f"  cwd: {os.getcwd()}"
-    )
 
 # Watermarking process
 def main():

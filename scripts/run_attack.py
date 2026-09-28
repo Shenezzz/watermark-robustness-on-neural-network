@@ -44,6 +44,7 @@ from src.watermarks.uchida import UchidaWatermark
 
 from src.training.loop import evaluate
 from src.utils.model_utils import get_layer_by_name
+from src.utils.path_resolver import resolve_path
 from src.eval.metrics import task_accuracy_retention, watermark_retention
 
 from src.attacks.quantization import apply_int8_weight_quantization
@@ -67,20 +68,6 @@ ATTACK_REGISTRY = {
 
 MODEL_REGISTRY = {"resnet18_cifar": resnet18_cifar, "lenet5": lenet5}
 DATA_REGISTRY = {"cifar10": get_cifar_loaders, "mnist": get_mnist_loaders}
-
-
-# Defining a helper function to find a file and if not found, return an error
-def resolve_path(path, project_root):
-    if os.path.exists(path):
-        return path
-    candidate = os.path.join(project_root, path)
-    if os.path.exists(candidate):
-        return candidate
-    raise FileNotFoundError(
-        f"Could not find '{path}'.\n  Tried: {os.path.abspath(path)}\n  Tried: {candidate}\n"
-        f"  cwd: {os.getcwd()}"
-    )
-
 
 def main():
     # We are creating an object of argparsesr to make the "--config" required command line arguemnt. without "--config" will fail
