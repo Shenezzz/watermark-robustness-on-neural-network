@@ -19,7 +19,7 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # project root, for `src.*` imports
 
-from src.models.resnet_cifar import resnet18_cifar
+from models.resnet18 import resnet18_cifar
 from src.models.lenet5 import lenet5
 
 from src.data.loaders import get_cifar_loaders

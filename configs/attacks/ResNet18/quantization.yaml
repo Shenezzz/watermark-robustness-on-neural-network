@@ -2,6 +2,7 @@ watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
 attack: quantization
 bits: 8
 dataset: cifar10
+model: resnet18_cifar
 
 checkpoint_dir: ./checkpoints
 checkpoint_name: resnet18_cifar10_uchida_attacked_quantization.pt

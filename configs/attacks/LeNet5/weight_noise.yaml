@@ -2,6 +2,8 @@ watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
 attack: weight_noise
 relative_std: 0.05
 seed: 7
+model: lenet5_mnist
+dataset: mnist
 
 checkpoint_dir: ./checkpoints
 checkpoint_name: lenet5_mnist_uchida_attacked_weight_noise.pt

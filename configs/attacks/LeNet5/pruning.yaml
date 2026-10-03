@@ -1,6 +1,8 @@
 watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
 attack: pruning
 sparsity: 0.90
+model: lenet5_mnist
+dataset: mnist
 
 checkpoint_dir: ./checkpoints
 checkpoint_name: lenet5_mnist_uchida_attacked_pruning_90.pt

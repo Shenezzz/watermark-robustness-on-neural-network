@@ -23,7 +23,7 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # find the project root and adds into the projects import path
 
-from src.models.resnet_cifar import resnet18_cifar
+from models.resnet18 import resnet18_cifar
 from src.models.lenet5 import lenet5
 
 from src.utils.load_config_and_checkpoint import load_config_and_checkpoint
@@ -34,7 +34,6 @@ from src.data.loaders import get_mnist_loaders
 from src.training.loop import train_one_epoch, evaluate
 from src.watermarks.uchida import UchidaWatermark
 from src.utils.model_utils import get_layer_by_name
-from src.utils.path_resolver import resolve_path
 
 MODEL_REGISTRY = {
     "resnet18_cifar": resnet18_cifar,
@@ -117,20 +116,20 @@ def main():
         "model": cfg["model"],
         "dataset": cfg["dataset"],
         "test_acc": test_acc,
-        "baseline_test_acc": baseline_acc,
+        "baseline_test_acc": baseline_test_acc,
         "watermark_scheme": "uchida",
         "watermark_layer": cfg["watermark_layer"],
         "watermark_state": wm.state_dict(), # Saves both X(key) and b(message) allong with the message length. You cannot verify wihtout these values
     }, checkpoint_path)
     
     print(f"\nSaved watermarked checkpoint to {checkpoint_path}")
-    print(f"  test_acc: {test_acc:.4f}  (baseline was {baseline_acc:.4f} -- "
-          f"accuracy_retention so far = {test_acc / baseline_acc:.4f})")
+    print(f"  test_acc: {test_acc:.4f}  (baseline was {baseline_test_acc:.4f} -- "
+          f"accuracy_retention so far = {test_acc / baseline_test_acc:.4f})")
     print(f"  watermark_bit_acc: {wm.bit_accuracy():.3f}")
     
     if mlflow_cfg.get("enabled"):
         import mlflow
-        mlflow.log_metric("final_accuracy_retention", test_acc / baseline_acc)
+        mlflow.log_metric("final_accuracy_retention", test_acc / baseline_test_acc)
         mlflow.log_artifact(checkpoint_path)
         mlflow.end_run()
     

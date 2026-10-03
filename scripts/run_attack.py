@@ -7,7 +7,7 @@ a different attack against the same watermarked model.
 
 Usage:
 
-ResNet-18 : 
+ResNet-18 :
     python scripts/run_attack.py --config configs/attacks/ResNet18/quantization.yaml
     python scripts/run_attack.py --config configs/attacks/ResNet18/weight_noise.yaml
     python scripts/run_attack.py --config configs/attacks/ResNet18/deepeclipse_base.yaml
@@ -15,11 +15,12 @@ ResNet-18 :
     python scripts/run_attack.py --config configs/attacks/ResNet18/pruning.yaml
     python scripts/run_attack.py --config configs/attacks/ResNet18/fine_tune.yaml
 
+    python scripts/run_attack.py --config configs/attacks/ResNet18/quantization_weight_noise.yaml
+
 LeNet5 :
     python scripts/run_attack.py --config configs/attacks/LeNet5/quantization.yaml
     python scripts/run_attack.py --config configs/attacks/LeNet5/weight_noise.yaml
     python scripts/run_attack.py --config configs/attacks/LeNet5/deepeclipse_base.yaml
-    python scripts/run_attack.py --config configs/attacks/LeNet5/deepeclipse_advanced.yaml
     python scripts/run_attack.py --config configs/attacks/LeNet5/pruning.yaml
     python scripts/run_attack.py --config configs/attacks/LeNet5/fine_tune.yaml
 """
@@ -35,10 +36,10 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )  # To find the porjects root directory
 
-from src.models.resnet_cifar import resnet18_cifar
-from src.models.lenet5 import lenet5
+from src.models.resnet18 import resnet18_cifar
+from src.models.lenet5 import lenet5_mnist
 
-from src.data.loaders import get_cifar_loaders,get_mnist_loaders
+from src.data.loaders import get_cifar_loaders, get_mnist_loaders
 
 from src.watermarks.uchida import UchidaWatermark
 
@@ -68,16 +69,17 @@ ATTACK_REGISTRY = {
     "fine_tune": lambda model, cfg: apply_fine_tune(model, cfg),
 }
 
-MODEL_REGISTRY = {"resnet18_cifar": resnet18_cifar, "lenet5": lenet5}
+MODEL_REGISTRY = {"resnet18_cifar": resnet18_cifar, "lenet5_mnist": lenet5_mnist}
 DATA_REGISTRY = {"cifar10": get_cifar_loaders, "mnist": get_mnist_loaders}
 
+
 def main():
-    cfg, device, ckpt, baseline_test_acc = (
-        load_config_and_checkpoint("baseline_test_acc")
+    cfg, device, ckpt, baseline_test_acc = load_config_and_checkpoint(
+        "baseline_test_acc"
     )
 
     model = MODEL_REGISTRY[ckpt.get("model")](num_classes=10).to(device)
-    
+
     model.load_state_dict(ckpt["model_state_dict"])
 
     # Acces the layer that is watermarked
@@ -144,6 +146,9 @@ def main():
     out_path = os.path.join(cfg["checkpoint_dir"], cfg["checkpoint_name"])
     torch.save(
         {
+            "model_state_dict": model.state_dict(),
+            "model": cfg["model"],
+            "dataset": cfg["dataset"],
             "model_state_dict": attacked_model.state_dict(),
             "attack": cfg["attack"],
             "watermark_retention": wm_retention,

@@ -1,6 +1,7 @@
 watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
 attack: quantization
 bits: 8
+model: lenet5_mnist
 dataset: mnist
  
 checkpoint_dir: ./checkpoints

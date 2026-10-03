@@ -1,11 +1,12 @@
 watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
 attack: fine_tune
 mode: rtal #ftal or rtal
-dataset: mnist
 final_layer_name: fc3
 epochs: 5
 lr: 0.001
 batch_size: 128
+model: lenet5_mnist
+dataset: mnist
  
 checkpoint_dir: ./checkpoints
 checkpoint_name: lenet5_mnist_uchida_attacked_rtal.pt

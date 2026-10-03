@@ -23,6 +23,8 @@ def load_config_and_checkpoint(test_acc_keyword):
     )
 
     ckpt = torch.load(ckpt_path, map_location=device)
+    
+    torch.save(ckpt,ckpt_path)
 
     baseline_test_acc = ckpt[test_acc_keyword]
 

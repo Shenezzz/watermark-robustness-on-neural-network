@@ -21,5 +21,5 @@ class LeNet5(nn.Module):
         x = F.relu(self.fc2(x))
         return self.fc3(x)
         
-def lenet5(num_classes=10):
+def lenet5_mnist(num_classes=10):
     return LeNet5(num_classes=num_classes)

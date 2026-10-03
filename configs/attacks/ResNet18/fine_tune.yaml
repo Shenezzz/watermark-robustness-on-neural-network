@@ -2,6 +2,7 @@ watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
 attack: fine_tune
 mode: rtal
 dataset: cifar10
+model: resnet18_cifar
 epochs: 5
 lr: 0.001        # much lower than baseline training's 0.1 -- this is fine-tuning, not training from scratch
 batch_size: 128
