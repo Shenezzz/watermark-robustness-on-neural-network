@@ -13,18 +13,16 @@ L(total) = L(training) + A*L(watermark)
 Run command : python scripts/embed_watermark.py --config configs/watermarks/uchida_resnet.yaml
 """
 
-import argparse
 import os
 import sys  # used for file path and directories
 import time
  
 import torch
-import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # find the project root and adds into the projects import path
 
-from models.resnet18 import resnet18_cifar
-from src.models.lenet5 import lenet5
+from src.models.resnet18 import resnet18_cifar
+from src.models.lenet5 import lenet5_mnist
 
 from src.utils.load_config_and_checkpoint import load_config_and_checkpoint
 
@@ -37,7 +35,7 @@ from src.utils.model_utils import get_layer_by_name
 
 MODEL_REGISTRY = {
     "resnet18_cifar": resnet18_cifar,
-    "lenet5": lenet5,
+    "lenet5": lenet5_mnist,
 }
  
 DATA_REGISTRY = {
@@ -54,7 +52,7 @@ def main():
     
     model = MODEL_REGISTRY[cfg["model"]](num_classes=cfg["num_classes"]).to(device) # Creating a new ResNet-18 Note: At this moment the weights are randomly initialzed
     model.load_state_dict(ckpt["model_state_dict"]) # replace random weights with baseline weights.
-    # Note: Now "model" is a clean trained ResNet
+    # Note: Now "model" is a clean trained model
     
     # Setting watermark on chosen layer
     target_layer = get_layer_by_name(model, cfg["watermark_layer"])

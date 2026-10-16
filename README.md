@@ -20,9 +20,9 @@ Attack: Deepeclipse Base
   watermark_retention:      0.000  (1.0 = fully intact, ~0.5 = destroyed)
   task_accuracy_retention:  0.977  (attacked_acc=0.9258 / baseline_acc=0.9479)
 
-Attack: Aeepeclipse Advanced
-  watermark_retention:      0.000  (1.0 = fully intact, ~0.5 = destroyed)
-  task_accuracy_retention:  0.105  (attacked_acc=0.1000 / baseline_acc=0.9479)
+Attack: Deepeclipse Advanced
+ watermark_retention:      0.500  (1.0 = fully intact, ~0.5 = destroyed)
+  task_accuracy_retention:  0.968  (attacked_acc=0.9172 / baseline_acc=0.9479)
 
 Attack: Pruning
     sparaity : 50
@@ -40,7 +40,6 @@ Attack: Fine Tune
     RTAL:
         watermark_retention:      1.000  (1.0 = fully intact, ~0.5 = destroyed)
         task_accuracy_retention:  0.981  (attacked_acc=0.9297 / baseline_acc=0.9479)
-
 
 LeNet5 MNIST
 
@@ -60,6 +59,6 @@ Attack: fine_tune
   watermark_retention:      1.000  (1.0 = fully intact, ~0.5 = destroyed)
   task_accuracy_retention:  0.999  (attacked_acc=0.9907 / baseline_acc=0.9915)
   
-Attack: pruning
+Attack: pruning (0.9)
   watermark_retention:      0.812  (1.0 = fully intact, ~0.5 = destroyed)
   task_accuracy_retention:  0.608  (attacked_acc=0.6028 / baseline_acc=0.9915)

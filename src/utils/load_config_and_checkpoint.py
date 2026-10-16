@@ -18,14 +18,16 @@ def load_config_and_checkpoint(test_acc_keyword):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    ckpt_path = resolve_path(
-        cfg["watermarked_checkpoint"], project_root
-    )
-
-    ckpt = torch.load(ckpt_path, map_location=device)
+    if cfg.get("watermarked_checkpoint",False):
+        ckpt_path = resolve_path(
+            cfg["watermarked_checkpoint"], project_root
+        )
+    else:
+        ckpt_path = resolve_path(
+            cfg["baseline_checkpoint"], project_root
+        )
     
-    torch.save(ckpt,ckpt_path)
-
+    ckpt = torch.load(ckpt_path, map_location=device)
     baseline_test_acc = ckpt[test_acc_keyword]
 
     return cfg, device, ckpt, baseline_test_acc

@@ -29,7 +29,7 @@ class BasicBlock(nn.Module):
         # 2) if the number of channels change (64 -> 128)
         # So down the convolutions, the spatial size or number of channels may change and this may cause
         # a problem as we cannot add the main path and the shortcut path due to missmatch in their shapes.
-        # So now the if block is only executed if there is a mismatch in their shapes to faciliate shortcut + main path.
+        # the below code is only executed if there is a mismatch in their shapes to faciliate shortcut + main path.
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
@@ -47,6 +47,7 @@ class ResNetCIFAR(nn.Module):
         super().__init__()
         self.in_planes = 64
  
+        # Stem
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
  

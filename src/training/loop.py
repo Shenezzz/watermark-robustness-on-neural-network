@@ -9,7 +9,7 @@ def train_one_epoch(model, loader, optimizer, device, extra_loss_fn=None):
     embedding will use later (e.g. Uchida's weight-regularization term)
     instead of copy-pasting this whole function.
     """
-    model.train()
+    model.train() # training mode to enable training-specific behavious such as dropout
     total_loss, correct, total = 0.0, 0, 0
     for images, labels in loader:
         images, labels = images.to(device), labels.to(device)
@@ -24,6 +24,8 @@ def train_one_epoch(model, loader, optimizer, device, extra_loss_fn=None):
         total_loss += loss.item() * images.size(0)
         correct += (outputs.argmax(1) == labels).sum().item()
         total += images.size(0)
+        
+    # Returning the loss in one training round as total_loss/total and acc as correct/total
     return total_loss / total, correct / total
  
  

@@ -33,6 +33,7 @@ def apply_fine_tune(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
     batch_size = cfg.get("batch_size", 128)
 
     device = next(model.parameters()).device
+    
     attacked = copy.deepcopy(model)
 
     if mode == "ftal":

@@ -31,12 +31,10 @@ class UchidaWatermark:
 
         vector_len = layer.in_channels * layer.kernel_size[0] * layer.kernel_size[1]
         device, dtype = layer.weight.device, layer.weight.dtype
-
         # Secret key: fixed random projection matrix, generated once and
         # never updated by the optimizer (it's not an nn.Parameter).
         gen = torch.Generator().manual_seed(seed)
         self.X = torch.randn(message_len, vector_len, generator=gen).to(device, dtype)
-
         # Secret payload: the bit-string you're actually embedding.
         payload_gen = torch.Generator().manual_seed(seed + 1)  # different seed from X
         self.target_bits = (torch.rand(message_len, generator=payload_gen) > 0.5).float().to(device, dtype)

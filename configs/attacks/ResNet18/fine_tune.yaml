@@ -1,6 +1,6 @@
 watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
 attack: fine_tune
-mode: rtal
+mode: ftal
 dataset: cifar10
 model: resnet18_cifar
 epochs: 5

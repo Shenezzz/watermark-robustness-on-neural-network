@@ -14,6 +14,7 @@ import torch
 
 def apply_weight_noise(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
     relative_std = cfg["relative_std"]  # e.g. 0.05 = noise with std = 5% of each layer's own weight std
+    #To make random noise reproducilble allowing us experiment under same condition
     seed = cfg.get("seed", 0)
     generator = torch.Generator().manual_seed(seed)
  

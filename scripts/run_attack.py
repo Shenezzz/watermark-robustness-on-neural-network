@@ -25,12 +25,10 @@ LeNet5 :
     python scripts/run_attack.py --config configs/attacks/LeNet5/fine_tune.yaml
 """
 
-import argparse  # Used to handle command line arguements
 import os  # Provides function that helps to interact with the OS. Commonly used to handle file directories
 import sys
 
 import torch  # Commonly used library for constructing neural networks
-import yaml  # Used to read configs from yaml files
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -81,7 +79,7 @@ def main():
     model = MODEL_REGISTRY[ckpt.get("model")](num_classes=10).to(device)
 
     model.load_state_dict(ckpt["model_state_dict"])
-
+    
     # Acces the layer that is watermarked
     layer = get_layer_by_name(model, ckpt["watermark_layer"])
     wm = UchidaWatermark.from_state_dict(layer, ckpt["watermark_state"])

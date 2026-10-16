@@ -19,8 +19,8 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # project root, for `src.*` imports
 
-from models.resnet18 import resnet18_cifar
-from src.models.lenet5 import lenet5
+from src.models.resnet18 import resnet18_cifar
+from src.models.lenet5 import lenet5_mnist
 
 from src.data.loaders import get_cifar_loaders
 from src.data.loaders import get_mnist_loaders
@@ -30,7 +30,7 @@ from src.training.loop import train_one_epoch, evaluate
 
 MODEL_REGISTRY = {
     "resnet18_cifar": resnet18_cifar,
-    "lenet5": lenet5
+    "lenet5": lenet5_mnist
 }
 
 DATA_REGISTRY = {
@@ -64,6 +64,7 @@ def main():
         })
 
     train_loader, test_loader = DATA_REGISTRY[cfg["dataset"]](batch_size=cfg["batch_size"])
+    
     model = MODEL_REGISTRY[cfg["model"]](num_classes=cfg["num_classes"]).to(device)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=cfg["lr"], momentum=cfg["momentum"],
@@ -98,7 +99,7 @@ def main():
                        checkpoint_path)
 
     print(f"\nBest test accuracy: {best_acc:.4f} -- checkpoint saved to {checkpoint_path}")
-    print("This test_acc is your Phase-0 reference number for every later "
+    print("This test_acc is the reference number for every later "
           "task_accuracy_retention calculation (retention = attacked_acc / this_acc).")
 
     if mlflow_cfg.get("enabled"):
@@ -106,7 +107,6 @@ def main():
         mlflow.log_metric("best_test_acc", best_acc)
         mlflow.log_artifact(checkpoint_path)
         mlflow.end_run()
-
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,4 @@
+
 watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
 attack: pruning
 sparsity: 0.995

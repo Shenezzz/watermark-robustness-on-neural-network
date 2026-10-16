@@ -1,5 +1,6 @@
 model: resnet18_cifar
 dataset: cifar10
+num_classes: 10
 
 baseline_checkpoint: ./checkpoints/resnet18_cifar10_baseline.pt
 watermark_layer: layer3.0.conv1   # which Conv2d layer to watermark -- see note in embed_watermark.py

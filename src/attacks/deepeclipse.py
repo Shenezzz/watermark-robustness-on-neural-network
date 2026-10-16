@@ -17,6 +17,7 @@ import copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from src.utils.model_utils import get_layer_by_name, set_layer_by_name
 
 
 # ---------------------------------------------------------------------------
@@ -40,9 +41,6 @@ def rank_candidate_layers(model: nn.Module, window: int = 50):
     return sorted(scored, key=lambda t: t[2])
 
 
-# ---------------------------------------------------------------------------
-# Conv obfuscation primitives (Algorithms 3-4) -- unchanged from deepeclipse_attack.py
-# ---------------------------------------------------------------------------
 def base_conv_obfuscation(conv: nn.Conv2d):
     device, dtype = conv.weight.device, conv.weight.dtype
     new_weight = F.pad(conv.weight.data, (1, 1, 1, 1), value=0.0)
@@ -50,7 +48,8 @@ def base_conv_obfuscation(conv: nn.Conv2d):
     new_conv = nn.Conv2d(
         conv.in_channels, conv.out_channels,
         kernel_size=(conv.kernel_size[0] + 2, conv.kernel_size[1] + 2),
-        stride=conv.stride, padding=(old_pad[0] + 1, old_pad[1] + 1),
+        stride=conv.stride, 
+        padding=(old_pad[0] + 1, old_pad[1] + 1),
         dilation=conv.dilation, groups=conv.groups, bias=conv.bias is not None,
     ).to(device, dtype)
     new_conv.weight.data = new_weight
@@ -90,8 +89,11 @@ def advanced_conv_obfuscation(conv: nn.Conv2d, next_conv: nn.Conv2d,
     new_conv = nn.Conv2d(
         conv.in_channels, conv.out_channels,
         kernel_size=(conv.kernel_size[0] + 2, conv.kernel_size[1] + 2),
-        stride=conv.stride, padding=(old_pad[0] + 1, old_pad[1] + 1),
-        dilation=conv.dilation, groups=conv.groups, bias=True,
+        stride=conv.stride, 
+        padding=(old_pad[0] + 1, old_pad[1] + 1),
+        dilation=conv.dilation, 
+        groups=conv.groups, 
+        bias=True,
     ).to(device, dtype)
     new_conv.weight.data = padded * lam
     new_conv.bias.data = (conv.bias.data.clone() * lam) if conv.bias is not None else torch.zeros(P, device=device, dtype=dtype)
@@ -99,8 +101,10 @@ def advanced_conv_obfuscation(conv: nn.Conv2d, next_conv: nn.Conv2d,
     new_next = nn.Conv2d(
         next_conv.in_channels, next_conv.out_channels,
         kernel_size=next_conv.kernel_size, stride=next_conv.stride,
-        padding=next_conv.padding, dilation=next_conv.dilation,
-        groups=next_conv.groups, bias=next_conv.bias is not None,
+        padding=next_conv.padding, 
+        dilation=next_conv.dilation,
+        groups=next_conv.groups, 
+        bias=next_conv.bias is not None,
     ).to(device, dtype)
     new_next.weight.data = next_conv.weight.data.clone() / lam
     if next_conv.bias is not None:
@@ -108,33 +112,6 @@ def advanced_conv_obfuscation(conv: nn.Conv2d, next_conv: nn.Conv2d,
 
     return new_conv, new_next
 
-
-# ---------------------------------------------------------------------------
-# In-place layer replacement helper
-# ---------------------------------------------------------------------------
-def _set_layer_by_name(model, layer_name, new_module):
-    """e.g. 'layer3.0.conv1' -> model.layer3[0].conv1 = new_module"""
-    parts = layer_name.split(".")
-    module = model
-    for part in parts[:-1]:
-        module = module[int(part)] if part.isdigit() else getattr(module, part)
-    last = parts[-1]
-    if last.isdigit():
-        module[int(last)] = new_module
-    else:
-        setattr(module, last, new_module)
-
-
-def _get_layer_by_name(model, layer_name):
-    module = model
-    for part in layer_name.split("."):
-        module = module[int(part)] if part.isdigit() else getattr(module, part)
-    return module
-
-
-# ---------------------------------------------------------------------------
-# Registry-compatible wrapper
-# ---------------------------------------------------------------------------
 def apply_deepeclipse(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
     """
     cfg expects:
@@ -147,17 +124,17 @@ def apply_deepeclipse(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
     """
     attacked = copy.deepcopy(model)
     target_name = cfg["_watermark_layer"]
-    target_layer = _get_layer_by_name(attacked, target_name)
+    target_layer = get_layer_by_name(attacked, target_name)
     assert isinstance(target_layer, nn.Conv2d), \
         f"DeepEclipse conv obfuscation requires a Conv2d layer, got {type(target_layer)}"
 
     mode = cfg.get("mode", "base")
     if mode == "base":
         new_layer = base_conv_obfuscation(target_layer)
-        _set_layer_by_name(attacked, target_name, new_layer)
+        set_layer_by_name(attacked, target_name, new_layer)
     elif mode == "advanced":
         next_name = cfg["next_layer"]
-        next_layer = _get_layer_by_name(attacked, next_name)
+        next_layer = get_layer_by_name(attacked, next_name)
         assert isinstance(next_layer, nn.Conv2d), \
             f"'next_layer' must be a Conv2d layer, got {type(next_layer)}"
         beta = cfg.get("beta", 10.0)
@@ -169,8 +146,8 @@ def apply_deepeclipse(model: torch.nn.Module, cfg: dict) -> torch.nn.Module:
             target_layer, next_layer,
             beta=beta, mu=mu, sigma=sigma, stat=stat, seed=seed,
         )
-        _set_layer_by_name(attacked, target_name, new_target)
-        _set_layer_by_name(attacked, next_name, new_next)
+        set_layer_by_name(attacked, target_name, new_target)
+        set_layer_by_name(attacked, next_name, new_next)
     else:
         raise ValueError(f"Unknown DeepEclipse mode: {mode!r} (expected 'base' or 'advanced')")
 
