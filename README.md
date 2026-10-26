@@ -60,5 +60,5 @@ Attack: fine_tune
   task_accuracy_retention:  0.999  (attacked_acc=0.9907 / baseline_acc=0.9915)
   
 Attack: pruning (0.9)
-  watermark_retention:      0.812  (1.0 = fully intact, ~0.5 = destroyed)
-  task_accuracy_retention:  0.608  (attacked_acc=0.6028 / baseline_acc=0.9915)
+  watermark_retention:      0.531  (1.0 = fully intact, ~0.5 = destroyed)
+  task_accuracy_retention:  0.998  (attacked_acc=0.9894 / baseline_acc=0.9915)

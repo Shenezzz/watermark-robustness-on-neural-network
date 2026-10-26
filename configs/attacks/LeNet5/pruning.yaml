@@ -1,8 +1,16 @@
 watermarked_checkpoint: ./checkpoints/lenet5_mnist_uchida.pt
 attack: pruning
+criterion: "sensitivity" #or "magnitude"
 sparsity: 0.90
+rounds: 5
+finetune_epochs: 3
+sensitivity_batches : 50 # only used by the sensistivity batches
+
 model: lenet5_mnist
 dataset: mnist
+
+lr: 0.01
+batch_size: 128
 
 checkpoint_dir: ./checkpoints
 checkpoint_name: lenet5_mnist_uchida_attacked_pruning_90.pt

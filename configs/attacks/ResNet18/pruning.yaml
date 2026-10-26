@@ -1,14 +1,23 @@
 
 watermarked_checkpoint: ./checkpoints/resnet18_cifar10_uchida.pt
 attack: pruning
-sparsity: 0.995
+criterion: "sensitivity" #or "magnitude"
+sparsity: 0.90
+rounds: 5
+finetune_epochs: 3
+sensitivity_batches : 50 # only used by the sensistivity batches
+
 dataset: cifar10
 model: resnet18_cifar
 
+lr: 0.01
+batch_size: 128
+
+
 checkpoint_dir: ./checkpoints
-checkpoint_name: resnet18_cifar10_uchida_attacked_pruning_995.pt
+checkpoint_name: resnet18_cifar10_uchida_attacked_pruning_90.pt
 
 mlflow:
   enabled: true
   experiment_name: dnn-watermark-robustness
-  run_name: resnet18_cifar10_uchida_pruning_995
+  run_name: resnet18_cifar10_uchida_pruning_90
